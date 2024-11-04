@@ -1,5 +1,6 @@
 package com.example.quizapp
 import android.os.Bundle
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import androidx.activity.viewModels
@@ -11,10 +12,18 @@ import android.widget.Button
 class MainActivity : AppCompatActivity() {
 
     private val quizViewModel: QuizViewModel by viewModels()
+    private lateinit var categorySpinner: Spinner
+    private lateinit var difficultySpinner: Spinner
+    private lateinit var questionTypeSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        categorySpinner = findViewById(R.id.categorySpinner)
+        difficultySpinner = findViewById(R.id.spinnerDifficulty)
+        questionTypeSpinner = findViewById(R.id.spinnerQuestionType)
+
 
         val categorySpinner: Spinner = findViewById(R.id.categorySpinner)
         val difficultySpinner: Spinner = findViewById(R.id.spinnerDifficulty)
@@ -32,9 +41,9 @@ class MainActivity : AppCompatActivity() {
         // Načti kategorie při spuštění
         quizViewModel.loadCategories()
 
-        // Nastav listener na tlačítko pro spuštění kvízu
         startQuizButton.setOnClickListener {
-            val selectedCategory = categorySpinner.selectedItem.toString()
+            val selectedCategoryName = categorySpinner.selectedItem.toString()
+            val selectedCategoryId = quizViewModel.categoryMap[selectedCategoryName] ?: 9 // Defaultní hodnota, např. 9
             val selectedDifficulty = difficultySpinner.selectedItem.toString().lowercase()
             val selectedType = if (questionTypeSpinner.selectedItem.toString() == "Multiple Choice") {
                 "multiple"
@@ -42,9 +51,11 @@ class MainActivity : AppCompatActivity() {
                 "boolean"
             }
 
-            // Zavolání metody pro získání otázek
-            quizViewModel.getQuizQuestions(selectedCategory, selectedDifficulty, selectedType)
+            // Zavolání API metody pro otázky s ID kategorie
+            quizViewModel.getQuizQuestions(selectedCategoryId.toString(), selectedDifficulty, selectedType)
+
+            Log.d("MainActivity", "Requested questions with category ID: $selectedCategoryId, " +
+                    "difficulty: $selectedDifficulty, type: $selectedType")
         }
     }
-
 }
