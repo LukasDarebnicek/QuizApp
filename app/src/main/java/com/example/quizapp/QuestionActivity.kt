@@ -89,6 +89,7 @@ class QuestionActivity : AppCompatActivity() {
             option2.text = "Option 2"
             option3.text = "Option 3"
             option4.text = "Option 4"
+            //TODO doladit zobrazení otázek
         }
     }
 
