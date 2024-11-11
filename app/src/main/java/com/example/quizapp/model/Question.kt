@@ -9,4 +9,7 @@ data class Question(
     @SerializedName("question") val questionText: String,
     @SerializedName("correct_answer") val correctAnswer: String,
     @SerializedName("incorrect_answers") val incorrectAnswers: List<String>
-)
+) {
+    val options: List<String>
+        get() = incorrectAnswers + correctAnswer
+}

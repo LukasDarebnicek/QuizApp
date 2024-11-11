@@ -24,7 +24,7 @@ class QuizViewModel : ViewModel() {
 
     // LiveData pro otázky
     private val _questions = MutableLiveData<List<Question>>()
-    //val questions: LiveData<List<Question>> get() = _questions
+    val questions: LiveData<List<Question>> get() = _questions
 
     private val _categoryMap = mutableMapOf<String, Int>()
     val categoryMap: Map<String, Int> get() = _categoryMap
