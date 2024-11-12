@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
             quizViewModel.getQuizQuestions(selectedCategoryId.toString(), selectedDifficulty, selectedType)
 
             // Logování požadavku
-            Log.d("MainActivity", "Requested questions with category ID: $selectedCategoryId, " +
-                    "difficulty: $selectedDifficulty, type: $selectedType")
+//            Log.d("MainActivity", "Requested questions with category ID: $selectedCategoryId, " +
+//                    "difficulty: $selectedDifficulty, type: $selectedType")
 
             // Přechod do QuestionActivity a předání dat
             val intent = Intent(this, QuestionActivity::class.java).apply {
@@ -68,8 +68,8 @@ class MainActivity : AppCompatActivity() {
 
             // Pokud máte otázky, předáte je také
             quizViewModel.questions.observe(this, Observer { questions ->
-                val questionList = questions.map { it.questionText }.toTypedArray()
-                intent.putExtra("questions", questionList)
+                //val questionList = questions.map { it.questionText }.toTypedArray()
+                intent.putExtra("questions", questions.toTypedArray())
                 startActivity(intent)
             })
         }

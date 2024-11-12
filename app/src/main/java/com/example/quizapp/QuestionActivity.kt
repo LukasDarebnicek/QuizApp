@@ -1,6 +1,7 @@
 package com.example.quizapp
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -17,11 +18,12 @@ class QuestionActivity : AppCompatActivity() {
     private lateinit var multipleChoiceContainer: LinearLayout
     private lateinit var trueButton: Button
     private lateinit var falseButton: Button
-    private lateinit var option1: CheckBox
-    private lateinit var option2: CheckBox
-    private lateinit var option3: CheckBox
-    private lateinit var option4: CheckBox
+    private lateinit var option1: RadioButton
+    private lateinit var option2: RadioButton
+    private lateinit var option3: RadioButton
+    private lateinit var option4: RadioButton
     private lateinit var nextQuestionButton: Button
+    private lateinit var checkAnswerButton: Button
 
     private val quizViewModel: QuizViewModel by viewModels()
     private var questionList: List<Question> = listOf()
@@ -31,8 +33,7 @@ class QuestionActivity : AppCompatActivity() {
     private lateinit var selectedCategory: String
     private lateinit var selectedDifficulty: String
     private lateinit var selectedType: String
-    private lateinit var questions: Array<String>
-
+    private lateinit var questions: Array<Question>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,27 +50,47 @@ class QuestionActivity : AppCompatActivity() {
         option3 = findViewById(R.id.option3)
         option4 = findViewById(R.id.option4)
         nextQuestionButton = findViewById(R.id.nextQuestionButton)
+        checkAnswerButton = findViewById(R.id.checkAnswerButton)
 
         // Načtení dat z Intentu
         selectedCategory = intent.getStringExtra("category").toString()
         selectedDifficulty = intent.getStringExtra("difficulty").toString()
         selectedType = intent.getStringExtra("questionType").toString()
-        questions = intent.getStringArrayExtra("questions") ?: arrayOf()
+        //questions = intent.getStringArrayExtra("questions") ?: arrayOf()
+        questions = intent.getParcelableArrayExtra("questions")?.map { it as Question }?.toTypedArray() ?: arrayOf()
+
 
         // Zobrazit první otázku, pokud existují
         if (questions.isNotEmpty()) {
-            questionTextView.text = questions[currentQuestionIndex]
+            questionTextView.text = questions[currentQuestionIndex].questionText
             displayAnswers(selectedType)
         }
+        checkAnswerButton.setOnClickListener {
+            val selectedOption = when {
+                option1.isChecked -> option1.text.toString()
+                option2.isChecked -> option2.text.toString()
+                option3.isChecked -> option3.text.toString()
+                option4.isChecked -> option4.text.toString()
+                else -> null // No option selected
+            }
 
-        // Nastavení akce pro další otázku
+            selectedOption?.let {
+                checkAnswer(it)
+                highlightAnswers(it)
+            }
+        }
+
         nextQuestionButton.setOnClickListener {
             if (currentQuestionIndex < questions.size - 1) {
                 currentQuestionIndex++
-                questionTextView.text = questions[currentQuestionIndex]
+                questionTextView.text = questions[currentQuestionIndex].questionText
                 displayAnswers(selectedType)
+
+                // Reset colors for the next question
+                resetAnswerColors()
             } else {
                 Toast.makeText(this, "No more questions", Toast.LENGTH_SHORT).show()
+                // Optionally, navigate to a results screen or finish the quiz
             }
         }
     }
@@ -85,12 +106,60 @@ class QuestionActivity : AppCompatActivity() {
             multipleChoiceContainer.visibility = View.VISIBLE
 
             // Nastavte text odpovědí pro Multiple Choice
-            option1.text = "Option 1"
-            option2.text = "Option 2"
-            option3.text = "Option 3"
-            option4.text = "Option 4"
-            //TODO doladit zobrazení otázek
+            val options = currentQuestion.options.shuffled() // Shuffle the options for randomness
+            option1.text = options[0]
+            option2.text = options[1]
+            option3.text = options[2]
+            option4.text = options[3]
+
+            // Clear previous selections
+            option1.isChecked = false
+            option2.isChecked = false
+            option3.isChecked = false
+            option4.isChecked = false
         }
     }
 
+    private fun highlightAnswers(selectedOption: String) {
+        val correctAnswer = questions[currentQuestionIndex].correctAnswer
+
+        // Reset the colors of options
+        resetAnswerColors()
+
+        // Highlight the selected option
+        when (selectedOption) {
+            option1.text.toString() -> option1.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
+            option2.text.toString() -> option2.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
+            option3.text.toString() -> option3.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
+            option4.text.toString() -> option4.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
+        }
+
+        // Highlight the correct answer if the selected answer is incorrect
+        if (selectedOption != correctAnswer) {
+            when (correctAnswer) {
+                option1.text.toString() -> option1.setTextColor(Color.GREEN)
+                option2.text.toString() -> option2.setTextColor(Color.GREEN)
+                option3.text.toString() -> option3.setTextColor(Color.GREEN)
+                option4.text.toString() -> option4.setTextColor(Color.GREEN)
+            }
+        }
+    }
+    private fun resetAnswerColors() {
+        // Reset the text color of all options to black
+        option1.setTextColor(Color.BLACK)
+        option2.setTextColor(Color.BLACK)
+        option3.setTextColor(Color.BLACK)
+        option4.setTextColor(Color.BLACK)
+    }
+
+    private var score = 0
+    private fun checkAnswer(selectedOption: String) {
+        val correctAnswer = questions[currentQuestionIndex].correctAnswer
+        if (selectedOption == correctAnswer) {
+            score++
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Incorrect! The correct answer was: $correctAnswer", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
