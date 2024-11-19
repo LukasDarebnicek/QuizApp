@@ -10,6 +10,16 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Text pro skóre, zpočátku skrytý -->
+        <TextView
+            android:id="@+id/scoreTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="Your score is: 0"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
         <!-- Text pro otázku -->
         <TextView
             android:id="@+id/questionTextView"
@@ -17,6 +27,15 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:paddingBottom="16dp" />
+
+        <TextView
+            android:id="@+id/feedbackTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:visibility="gone"
+            android:padding="8dp" />
+
 
         <!-- Layout pro True/False odpovědi -->
         <LinearLayout
@@ -70,24 +89,32 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </RadioGroup>
+
+            <LinearLayout
+                android:id="@+id/scoreLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp" />
         </LinearLayout>
 
-        <!-- Tlačítko pro kontrolu odpovědi -->
+        <!-- Tlačítko pro ověření odpovědi -->
         <Button
-            android:id="@+id/checkAnswerButton"
+            android:id="@+id/actionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Check Answer"
             android:layout_marginTop="16dp" />
 
-        <!-- Tlačítko pro další otázku -->
         <Button
-            android:id="@+id/nextQuestionButton"
+            android:id="@+id/returnButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Next Question"
-            android:layout_marginTop="8dp" />
-
+            android:text="Return to Main Screen"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

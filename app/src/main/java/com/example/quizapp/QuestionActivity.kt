@@ -6,9 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import com.example.quizapp.viewmodel.QuizViewModel
 import com.example.quizapp.model.Question
 
 class QuestionActivity : AppCompatActivity() {
@@ -22,18 +21,19 @@ class QuestionActivity : AppCompatActivity() {
     private lateinit var option2: RadioButton
     private lateinit var option3: RadioButton
     private lateinit var option4: RadioButton
-    private lateinit var nextQuestionButton: Button
-    private lateinit var checkAnswerButton: Button
-
-    private val quizViewModel: QuizViewModel by viewModels()
+    private lateinit var actionButton: Button
+    private lateinit var scoreTextView: TextView
+    private lateinit var returnButton: Button
+    private lateinit var feedbackTextView: TextView
     private var questionList: List<Question> = listOf()
     private var currentQuestionIndex = 0
 
-    // Načtení dat z Intentu
     private lateinit var selectedCategory: String
     private lateinit var selectedDifficulty: String
     private lateinit var selectedType: String
     private lateinit var questions: Array<Question>
+
+    private var score = 0  // Počáteční skóre
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,49 +49,71 @@ class QuestionActivity : AppCompatActivity() {
         option2 = findViewById(R.id.option2)
         option3 = findViewById(R.id.option3)
         option4 = findViewById(R.id.option4)
-        nextQuestionButton = findViewById(R.id.nextQuestionButton)
-        checkAnswerButton = findViewById(R.id.checkAnswerButton)
+        actionButton = findViewById(R.id.actionButton)
+        scoreTextView = findViewById(R.id.scoreTextView)
+        returnButton = findViewById(R.id.returnButton)
+        scoreTextView = findViewById(R.id.scoreTextView)
+
+        // Inicializace TextView pro feedback (slovní hodnocení)
+        feedbackTextView = TextView(this)
+        feedbackTextView.textSize = 18f
+        feedbackTextView.setTextColor(Color.BLACK)
+
+        // Přidání feedback TextView do layoutu
+        val layout = findViewById<LinearLayout>(R.id.scoreLayout)
+        layout.addView(feedbackTextView)
 
         // Načtení dat z Intentu
         selectedCategory = intent.getStringExtra("category").toString()
         selectedDifficulty = intent.getStringExtra("difficulty").toString()
         selectedType = intent.getStringExtra("questionType").toString()
-        //questions = intent.getStringArrayExtra("questions") ?: arrayOf()
         questions = intent.getParcelableArrayExtra("questions")?.map { it as Question }?.toTypedArray() ?: arrayOf()
-
 
         // Zobrazit první otázku, pokud existují
         if (questions.isNotEmpty()) {
             questionTextView.text = questions[currentQuestionIndex].questionText
             displayAnswers(selectedType)
         }
-        checkAnswerButton.setOnClickListener {
-            val selectedOption = when {
-                option1.isChecked -> option1.text.toString()
-                option2.isChecked -> option2.text.toString()
-                option3.isChecked -> option3.text.toString()
-                option4.isChecked -> option4.text.toString()
-                else -> null // No option selected
-            }
 
-            selectedOption?.let {
-                checkAnswer(it)
-                highlightAnswers(it)
+        actionButton.setOnClickListener {
+            if (actionButton.text == "Check Answer") {
+                val selectedOption = when {
+                    option1.isChecked -> option1.text.toString()
+                    option2.isChecked -> option2.text.toString()
+                    option3.isChecked -> option3.text.toString()
+                    option4.isChecked -> option4.text.toString()
+                    else -> null // No option selected
+                }
+
+                checkAnswer(selectedOption)
+                highlightAnswers(selectedOption ?: "")
+
+                // Změň text tlačítka na "Next Question"
+                actionButton.text = "Next Question"
+            } else if (actionButton.text == "Next Question") {
+                if (currentQuestionIndex < questions.size - 1) {
+                    currentQuestionIndex++
+                    questionTextView.text = questions[currentQuestionIndex].questionText
+                    displayAnswers(selectedType)
+
+                    // Reset colors for the next question
+                    resetAnswerColors()
+
+                    // Změň text tlačítka zpět na "Check Answer"
+                    actionButton.text = "Check Answer"
+                } else {
+                    // Konec kvízu, zobrazení skóre
+                    showFinalScore()
+                }
             }
         }
 
-        nextQuestionButton.setOnClickListener {
-            if (currentQuestionIndex < questions.size - 1) {
-                currentQuestionIndex++
-                questionTextView.text = questions[currentQuestionIndex].questionText
-                displayAnswers(selectedType)
-
-                // Reset colors for the next question
-                resetAnswerColors()
-            } else {
-                Toast.makeText(this, "No more questions", Toast.LENGTH_SHORT).show()
-                // Optionally, navigate to a results screen or finish the quiz
-            }
+        // Tlačítko pro návrat na hlavní obrazovku
+        returnButton.setOnClickListener {
+            // Můžete změnit tuto logiku pro návrat na hlavní aktivitu
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish() // Volitelné: Zavírá aktuální aktivitu
         }
     }
 
@@ -144,6 +166,7 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun resetAnswerColors() {
         // Reset the text color of all options to black
         option1.setTextColor(Color.BLACK)
@@ -152,14 +175,33 @@ class QuestionActivity : AppCompatActivity() {
         option4.setTextColor(Color.BLACK)
     }
 
-    private var score = 0
-    private fun checkAnswer(selectedOption: String) {
+    private fun checkAnswer(selectedOption: String?) {
         val correctAnswer = questions[currentQuestionIndex].correctAnswer
-        if (selectedOption == correctAnswer) {
+        if (selectedOption.isNullOrEmpty()) {
+            // Pokud uživatel nevybral žádnou odpověď
+            Toast.makeText(this, "No answer selected! The correct answer is: $correctAnswer", Toast.LENGTH_LONG).show()
+        } else if (selectedOption == correctAnswer) {
             score++
             Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Incorrect! The correct answer was: $correctAnswer", Toast.LENGTH_SHORT).show()
         }
     }
+
+    // Funkce pro zobrazení skóre po skončení kvízu
+    // Funkce pro zobrazení skóre po skončení kvízu
+    private fun showFinalScore() {
+        //TODO dodělat tam nějaké vtipné hodnocení
+        AlertDialog.Builder(this)
+            .setTitle("Konec kvízu")
+            .setMessage("Vaše skóre je: $score/${questions.size}")
+            .setPositiveButton("OK") { _, _ ->
+                // Návrat na hlavní obrazovku
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+            .show()
+    }
 }
+

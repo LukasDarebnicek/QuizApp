@@ -59,7 +59,7 @@ class QuizViewModel : ViewModel() {
                     val jsonResponse = gson.toJson(response.body())
                    Log.d("QuizViewModel", "JSON Response: $jsonResponse") // Zalogování JSON odpovědi
                 } else {
-                    //Log.e("QuizViewModel", "Response was not successful: ${response.errorBody()?.string()}")
+                    Log.e("QuizViewModel", "Response was not successful: ${response.errorBody()?.string()}")
                 }
             }
 
