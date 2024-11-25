@@ -3,40 +3,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/background_gradient">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose Your Quiz Settings"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"/>
 
     <Spinner
         android:id="@+id/categorySpinner"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"/>
+        android:padding="8dp"
+        android:backgroundTint="@color/orange_light"
+        android:popupBackground="@color/orange_dark"/>
 
     <Spinner
         android:id="@+id/spinnerDifficulty"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"
+        android:padding="8dp"
+        android:backgroundTint="@color/orange_light"
+        android:popupBackground="@color/orange_dark"
         android:entries="@array/difficulty_options"/>
 
     <Spinner
         android:id="@+id/spinnerQuestionType"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"
+        android:padding="8dp"
+        android:backgroundTint="@color/orange_light"
+        android:popupBackground="@color/orange_dark"
         android:entries="@array/question_type_options"/>
-
 
     <Button
         android:id="@+id/buttonStartQuiz"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Start Quiz"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
+        android:padding="12dp"
+        android:backgroundTint="@color/orange_dark"
+        android:textColor="@color/white"
+        android:textStyle="bold"
         android:layout_gravity="center_horizontal"/>
-
-
-
 </LinearLayout>

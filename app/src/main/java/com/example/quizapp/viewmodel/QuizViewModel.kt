@@ -12,6 +12,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.google.gson.Gson
+import android.text.Html
 
 
 
@@ -28,6 +29,10 @@ class QuizViewModel : ViewModel() {
 
     private val _categoryMap = mutableMapOf<String, Int>()
     val categoryMap: Map<String, Int> get() = _categoryMap
+
+    // LiveData pro chyby
+    private val _apiError = MutableLiveData<Int>()
+    val apiError: LiveData<Int> get() = _apiError
 
     fun loadCategories() {
         repository.getCategories().enqueue(object : Callback<CategoryResponse> {
@@ -52,20 +57,42 @@ class QuizViewModel : ViewModel() {
         repository.getQuestions(category, difficulty, type).enqueue(object : Callback<QuizResponse> {
             override fun onResponse(call: Call<QuizResponse>, response: Response<QuizResponse>) {
                 if (response.isSuccessful) {
-                    _questions.value = response.body()?.results
+                    val resultCode = response.body()?.responseCode ?: 0
+                    if (resultCode == 0) {
+                        // Dekódování HTML entit ve výsledcích
+                        val decodedQuestions = response.body()?.results?.map { question ->
+                            question.copy(
+                                questionText = decodeHtmlEntities(question.questionText),
+                                correctAnswer = decodeHtmlEntities(question.correctAnswer),
+                                incorrectAnswers = question.incorrectAnswers.map { decodeHtmlEntities(it) }
+                            )
+                        }
+                        _questions.value = decodedQuestions
 
-                    // Použití Gson k převodu odpovědi na JSON string
-                    val gson = Gson()
-                    val jsonResponse = gson.toJson(response.body())
-                   Log.d("QuizViewModel", "JSON Response: $jsonResponse") // Zalogování JSON odpovědi
+                        // Použití Gson k převodu odpovědi na JSON string
+                        val gson = Gson()
+                        val jsonResponse = gson.toJson(response.body())
+                        //Log.d("QuizViewModel", "JSON Response: $jsonResponse") // Zalogování JSON odpovědi
+
+                        _apiError.value = 0 // Bez chyby
+                    } else {
+                        //Log.e("QuizViewModel", "API Error Code: $resultCode")
+                        _apiError.value = resultCode // Nastavení chybového kódu
+                    }
                 } else {
-                    Log.e("QuizViewModel", "Response was not successful: ${response.errorBody()?.string()}")
+                    //Log.e("QuizViewModel", "Response was not successful: ${response.errorBody()?.string()}")
+                    _apiError.value = 5 // Obecná chyba, například rate limit
                 }
             }
 
             override fun onFailure(call: Call<QuizResponse>, t: Throwable) {
-                Log.e("QuizViewModel", "Failed to get questions: ${t.message}")
+                //Log.e("QuizViewModel", "Failed to get questions: ${t.message}")
+                _apiError.value = 5 // Nastavení chyby při selhání volání
             }
         })
+    }
+
+    private fun decodeHtmlEntities(text: String): String {
+        return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
     }
 }

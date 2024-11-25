@@ -140,6 +140,22 @@ class QuestionActivity : AppCompatActivity() {
             option3.isChecked = false
             option4.isChecked = false
         }
+        // Ve třídě, která zpracovává zobrazení kvízu
+        val exitButton: Button = findViewById(R.id.btn_exit_quiz)
+        exitButton.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Exit Quiz")
+                .setMessage("Are you sure you want to exit the quiz?")
+                .setPositiveButton("Yes") { _, _ ->
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                .setNegativeButton("No", null)
+                .show()
+        }
+
     }
 
     private fun highlightAnswers(selectedOption: String) {

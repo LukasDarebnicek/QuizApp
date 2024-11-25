@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.quizapp.viewmodel.QuizViewModel
 import android.widget.Button
+import android.widget.Toast
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,6 +39,33 @@ class MainActivity : AppCompatActivity() {
 
         // Načtení kategorií při spuštění aplikace
         quizViewModel.loadCategories()
+
+        quizViewModel.apiError.observe(this, Observer { errorCode ->
+            when (errorCode) {
+                0 -> {
+                }
+                1 -> {
+                    showToast("No Results: Not enough questions available.")
+                }
+                2 -> {
+                    showToast("Invalid Parameter: Please check your query.")
+                }
+                3 -> {
+                    showToast("Token Not Found: Please try again later.")
+                }
+                4 -> {
+                    showToast("Token Empty: All questions exhausted. Reset needed.")
+                }
+                5 -> {
+                    showToast("Rate Limit Exceeded: Please wait and try again.")
+                }
+                else -> {
+                    showToast("Unknown error occurred. Please try again.")
+                }
+            }
+        })
+
+
 
         startQuizButton.setOnClickListener {
             // Získání názvu vybrané kategorie a její ID
@@ -73,5 +101,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             })
         }
+    }
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }
