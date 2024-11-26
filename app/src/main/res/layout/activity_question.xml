@@ -143,6 +143,21 @@
             android:layout_gravity="center"
             android:visibility="gone" />
 
+        <Button
+            android:id="@+id/saveScoreButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Save Score"
+            android:visibility="gone"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/orange_dark"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/returnButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+
         <!-- Tlačítko pro opuštění kvízu -->
         <Button
             android:id="@+id/btn_exit_quiz"

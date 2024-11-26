@@ -2,6 +2,8 @@
     <string name="app_name">QuizApp</string>
     <string name="start_quiz">Start Quiz</string>
     <string name="next">Next</string>
+    <string name="Eenter_your_name">Enter your name:</string>
+    <string name="your_name">Your name</string>
     <string-array name="difficulty_options">
         <item>Easy</item>
         <item>Medium</item>

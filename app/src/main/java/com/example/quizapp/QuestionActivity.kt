@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.*
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.quizapp.model.Question
@@ -24,16 +23,17 @@ class QuestionActivity : AppCompatActivity() {
     private lateinit var actionButton: Button
     private lateinit var scoreTextView: TextView
     private lateinit var returnButton: Button
-    private lateinit var feedbackTextView: TextView
+    private lateinit var saveScoreButton: Button
+    private lateinit var exitQuizButton: Button
+
     private var questionList: List<Question> = listOf()
     private var currentQuestionIndex = 0
+    private var score = 0  // Počáteční skóre
 
     private lateinit var selectedCategory: String
     private lateinit var selectedDifficulty: String
     private lateinit var selectedType: String
     private lateinit var questions: Array<Question>
-
-    private var score = 0  // Počáteční skóre
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,16 +52,8 @@ class QuestionActivity : AppCompatActivity() {
         actionButton = findViewById(R.id.actionButton)
         scoreTextView = findViewById(R.id.scoreTextView)
         returnButton = findViewById(R.id.returnButton)
-        scoreTextView = findViewById(R.id.scoreTextView)
-
-        // Inicializace TextView pro feedback (slovní hodnocení)
-        feedbackTextView = TextView(this)
-        feedbackTextView.textSize = 18f
-        feedbackTextView.setTextColor(Color.BLACK)
-
-        // Přidání feedback TextView do layoutu
-        val layout = findViewById<LinearLayout>(R.id.scoreLayout)
-        layout.addView(feedbackTextView)
+        saveScoreButton = findViewById(R.id.saveScoreButton)
+        exitQuizButton = findViewById(R.id.btn_exit_quiz)
 
         // Načtení dat z Intentu
         selectedCategory = intent.getStringExtra("category").toString()
@@ -71,153 +63,193 @@ class QuestionActivity : AppCompatActivity() {
 
         // Zobrazit první otázku, pokud existují
         if (questions.isNotEmpty()) {
-            questionTextView.text = questions[currentQuestionIndex].questionText
-            displayAnswers(selectedType)
+            displayQuestion()
         }
 
         actionButton.setOnClickListener {
-            if (actionButton.text == "Check Answer") {
-                val selectedOption = when {
-                    option1.isChecked -> option1.text.toString()
-                    option2.isChecked -> option2.text.toString()
-                    option3.isChecked -> option3.text.toString()
-                    option4.isChecked -> option4.text.toString()
-                    else -> null // No option selected
-                }
-
-                checkAnswer(selectedOption)
-                highlightAnswers(selectedOption ?: "")
-
-                // Změň text tlačítka na "Next Question"
-                actionButton.text = "Next Question"
-            } else if (actionButton.text == "Next Question") {
-                if (currentQuestionIndex < questions.size - 1) {
-                    currentQuestionIndex++
-                    questionTextView.text = questions[currentQuestionIndex].questionText
-                    displayAnswers(selectedType)
-
-                    // Reset colors for the next question
-                    resetAnswerColors()
-
-                    // Změň text tlačítka zpět na "Check Answer"
-                    actionButton.text = "Check Answer"
-                } else {
-                    // Konec kvízu, zobrazení skóre
-                    showFinalScore()
-                }
-            }
+            handleActionButton()
         }
 
-        // Tlačítko pro návrat na hlavní obrazovku
         returnButton.setOnClickListener {
-            // Můžete změnit tuto logiku pro návrat na hlavní aktivitu
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish() // Volitelné: Zavírá aktuální aktivitu
+            navigateToMainMenu()
+        }
+
+        saveScoreButton.setOnClickListener {
+            showSaveScoreDialog()
+        }
+
+        exitQuizButton.setOnClickListener {
+            navigateToMainMenu()
         }
     }
 
-    // Funkce pro zobrazení odpovědí na základě typu otázky
-    private fun displayAnswers(questionType: String) {
+    private fun displayQuestion() {
         val currentQuestion = questions[currentQuestionIndex]
-        if (questionType == "boolean") {
+        questionTextView.text = currentQuestion.questionText
+
+        if (selectedType == "boolean") {
             trueFalseContainer.visibility = View.VISIBLE
             multipleChoiceContainer.visibility = View.GONE
-        } else if (questionType == "multiple") {
+        } else {
             trueFalseContainer.visibility = View.GONE
             multipleChoiceContainer.visibility = View.VISIBLE
 
-            // Nastavte text odpovědí pro Multiple Choice
-            val options = currentQuestion.options.shuffled() // Shuffle the options for randomness
+            val options = currentQuestion.options.shuffled()
             option1.text = options[0]
             option2.text = options[1]
             option3.text = options[2]
             option4.text = options[3]
 
-            // Clear previous selections
             option1.isChecked = false
             option2.isChecked = false
             option3.isChecked = false
             option4.isChecked = false
         }
-        // Ve třídě, která zpracovává zobrazení kvízu
-        val exitButton: Button = findViewById(R.id.btn_exit_quiz)
-        exitButton.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("Exit Quiz")
-                .setMessage("Are you sure you want to exit the quiz?")
-                .setPositiveButton("Yes") { _, _ ->
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                .setNegativeButton("No", null)
-                .show()
-        }
+    }
 
+    private fun handleActionButton() {
+        if (actionButton.text == "Check Answer") {
+            val selectedOption = when {
+                option1.isChecked -> option1.text.toString()
+                option2.isChecked -> option2.text.toString()
+                option3.isChecked -> option3.text.toString()
+                option4.isChecked -> option4.text.toString()
+                else -> null
+            }
+            checkAnswer(selectedOption)
+            highlightAnswers(selectedOption ?: "")
+            actionButton.text = "Next Question"
+        } else {
+            if (currentQuestionIndex < questions.size - 1) {
+                currentQuestionIndex++
+                displayQuestion()
+                resetAnswerColors()
+                actionButton.text = "Check Answer"
+            } else {
+                saveScoreButton.visibility = View.VISIBLE
+                scoreTextView.text = "Your Score: $score/${questions.size}"
+                showFinalScoreDialog()
+            }
+        }
+    }
+
+    private fun checkAnswer(selectedOption: String?) {
+        val correctAnswer = questions[currentQuestionIndex].correctAnswer
+        if (selectedOption.isNullOrEmpty()) {
+            Toast.makeText(this, "No answer selected!", Toast.LENGTH_SHORT).show()
+        } else if (selectedOption == correctAnswer) {
+            score++
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun highlightAnswers(selectedOption: String) {
         val correctAnswer = questions[currentQuestionIndex].correctAnswer
 
-        // Reset the colors of options
         resetAnswerColors()
 
-        // Highlight the selected option
-        when (selectedOption) {
-            option1.text.toString() -> option1.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
-            option2.text.toString() -> option2.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
-            option3.text.toString() -> option3.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
-            option4.text.toString() -> option4.setTextColor(if (selectedOption == correctAnswer) Color.GREEN else Color.RED)
+        if (selectedOption == correctAnswer) {
+            highlightCorrectAnswer(correctAnswer)
+        } else {
+            highlightIncorrectAnswer(selectedOption)
+            highlightCorrectAnswer(correctAnswer)
         }
+    }
 
-        // Highlight the correct answer if the selected answer is incorrect
-        if (selectedOption != correctAnswer) {
-            when (correctAnswer) {
-                option1.text.toString() -> option1.setTextColor(Color.GREEN)
-                option2.text.toString() -> option2.setTextColor(Color.GREEN)
-                option3.text.toString() -> option3.setTextColor(Color.GREEN)
-                option4.text.toString() -> option4.setTextColor(Color.GREEN)
-            }
+    private fun highlightCorrectAnswer(correctAnswer: String) {
+        when (correctAnswer) {
+            option1.text -> option1.setTextColor(Color.GREEN)
+            option2.text -> option2.setTextColor(Color.GREEN)
+            option3.text -> option3.setTextColor(Color.GREEN)
+            option4.text -> option4.setTextColor(Color.GREEN)
+        }
+    }
+
+    private fun highlightIncorrectAnswer(selectedOption: String) {
+        when (selectedOption) {
+            option1.text -> option1.setTextColor(Color.RED)
+            option2.text -> option2.setTextColor(Color.RED)
+            option3.text -> option3.setTextColor(Color.RED)
+            option4.text -> option4.setTextColor(Color.RED)
         }
     }
 
     private fun resetAnswerColors() {
-        // Reset the text color of all options to black
         option1.setTextColor(Color.BLACK)
         option2.setTextColor(Color.BLACK)
         option3.setTextColor(Color.BLACK)
         option4.setTextColor(Color.BLACK)
     }
 
-    private fun checkAnswer(selectedOption: String?) {
-        val correctAnswer = questions[currentQuestionIndex].correctAnswer
-        if (selectedOption.isNullOrEmpty()) {
-            // Pokud uživatel nevybral žádnou odpověď
-            Toast.makeText(this, "No answer selected! The correct answer is: $correctAnswer", Toast.LENGTH_LONG).show()
-        } else if (selectedOption == correctAnswer) {
-            score++
-            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Incorrect! The correct answer was: $correctAnswer", Toast.LENGTH_SHORT).show()
+    private fun showFinalScoreDialog() {
+        // Zobrazit skóre a tlačítka
+        actionButton.visibility = View.GONE
+        scoreTextView.visibility = View.VISIBLE
+        returnButton.visibility = View.VISIBLE
+        saveScoreButton.visibility = View.VISIBLE
+        exitQuizButton.visibility = View.GONE
+        questionTextView.visibility = View.GONE
+        trueFalseContainer.visibility = View.GONE
+        multipleChoiceContainer.visibility = View.GONE
+
+
+        // Vytvořit vtipné hodnocení podle dosaženého skóre
+        val funnyRating = when {
+            score == questions.size -> "Perfect score! You are a quiz master!"
+            score >= questions.size * 0.75 -> "Great job! You're almost there!"
+            score >= questions.size * 0.5 -> "Good try! You know more than you think!"
+            score >= questions.size * 0.25 -> "Not bad! Keep practicing!"
+            else -> "Better luck next time! You can do it!"
         }
+
+        // Nastavit text pro skóre a hodnocení
+        scoreTextView.text = "Your score is: $score/${questions.size}\n$funnyRating"
     }
 
-    // Funkce pro zobrazení skóre po skončení kvízu
-    // Funkce pro zobrazení skóre po skončení kvízu
-    private fun showFinalScore() {
-        //TODO dodělat tam nějaké vtipné hodnocení
-        AlertDialog.Builder(this)
-            .setTitle("Konec kvízu")
-            .setMessage("Vaše skóre je: $score/${questions.size}")
-            .setPositiveButton("OK") { _, _ ->
-                // Návrat na hlavní obrazovku
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
+
+    private fun showSaveScoreDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_save_score, null)
+        val nameEditText = dialogView.findViewById<EditText>(R.id.nameEditText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Save Score")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val playerName = nameEditText.text.toString()
+                if (playerName.isNotEmpty()) {
+                    saveScore(playerName)
+                } else {
+                    Toast.makeText(this, "Name cannot be empty!", Toast.LENGTH_SHORT).show()
+                    showSaveScoreDialog() // Znovu otevře dialog, pokud jméno nebylo zadáno
+                }
             }
-            .show()
+            .setNegativeButton("Cancel") { _, _ ->
+                navigateToMainMenu()
+            }
+            .setCancelable(false)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun saveScore(playerName: String) {
+        // Simulace ukládání skóre
+        val scoreData = mapOf(
+            "name" to playerName,
+            "score" to score,
+            "category" to selectedCategory,
+            "difficulty" to selectedDifficulty
+        )
+        Toast.makeText(this, "Score saved for $playerName!", Toast.LENGTH_SHORT).show()
+
+        navigateToMainMenu()
+    }
+
+    private fun navigateToMainMenu() {
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 }
-
