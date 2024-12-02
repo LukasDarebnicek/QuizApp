@@ -3,11 +3,14 @@ package com.example.quizapp
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.quizapp.model.Question
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class QuestionActivity : AppCompatActivity() {
 
@@ -56,6 +59,7 @@ class QuestionActivity : AppCompatActivity() {
         exitQuizButton = findViewById(R.id.btn_exit_quiz)
 
         // Načtení dat z Intentu
+        val selectedCategoryName = intent.getStringExtra("categoryName") ?: "Unknown Category" // Přijměte název kategorie
         selectedCategory = intent.getStringExtra("category").toString()
         selectedDifficulty = intent.getStringExtra("difficulty").toString()
         selectedType = intent.getStringExtra("questionType").toString()
@@ -75,7 +79,7 @@ class QuestionActivity : AppCompatActivity() {
         }
 
         saveScoreButton.setOnClickListener {
-            showSaveScoreDialog()
+            showSaveScoreDialog(selectedCategoryName, selectedDifficulty)
         }
 
         exitQuizButton.setOnClickListener {
@@ -209,43 +213,54 @@ class QuestionActivity : AppCompatActivity() {
     }
 
 
-    private fun showSaveScoreDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_save_score, null)
-        val nameEditText = dialogView.findViewById<EditText>(R.id.nameEditText)
+    private fun showSaveScoreDialog(categoryName: String, difficulty: String) {
+        val builder = AlertDialog.Builder(this)
+        val input = EditText(this)
 
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Save Score")
-            .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val playerName = nameEditText.text.toString()
-                if (playerName.isNotEmpty()) {
-                    saveScore(playerName)
-                } else {
-                    Toast.makeText(this, "Name cannot be empty!", Toast.LENGTH_SHORT).show()
-                    showSaveScoreDialog() // Znovu otevře dialog, pokud jméno nebylo zadáno
-                }
-            }
-            .setNegativeButton("Cancel") { _, _ ->
-                navigateToMainMenu()
-            }
-            .setCancelable(false)
-            .create()
+        // Načíst poslední zadané jméno z SharedPreferences, pokud existuje
+        val sharedPreferences = getSharedPreferences("quiz_app", MODE_PRIVATE)
+        val lastName = sharedPreferences.getString("last_name", "") ?: ""
 
-        dialog.show()
+        // Nastavit poslední zadané jméno do input pole
+        input.setText(lastName)
+
+        builder.setTitle("Enter your name")
+        builder.setView(input)
+
+        builder.setPositiveButton("Save") { _, _ ->
+            val name = input.text.toString()
+
+            // Uložit nové jméno do SharedPreferences, aby bylo použito při dalším zobrazení
+            val editor = sharedPreferences.edit()
+            editor.putString("last_name", name)
+            editor.apply()
+
+            val gson = Gson()
+            val existingScores = sharedPreferences.getString("scores", "[]")
+            val type = object : TypeToken<MutableList<Map<String, String>>>() {}.type
+            val scoreList: MutableList<Map<String, String>> =
+                gson.fromJson(existingScores, type) ?: mutableListOf()
+
+            val scoreEntry = mapOf(
+                "name" to name,
+                "score" to score.toString(),
+                "category" to categoryName, // Použijte název kategorie
+                "difficulty" to difficulty
+            )
+            scoreList.add(scoreEntry)
+
+            val editorScores = sharedPreferences.edit()
+            editorScores.putString("scores", gson.toJson(scoreList))
+            editorScores.apply()
+
+            Toast.makeText(this, "Score saved!", Toast.LENGTH_SHORT).show()
+            navigateToMainMenu()
+        }
+
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
     }
 
-    private fun saveScore(playerName: String) {
-        // Simulace ukládání skóre
-        val scoreData = mapOf(
-            "name" to playerName,
-            "score" to score,
-            "category" to selectedCategory,
-            "difficulty" to selectedDifficulty
-        )
-        Toast.makeText(this, "Score saved for $playerName!", Toast.LENGTH_SHORT).show()
-
-        navigateToMainMenu()
-    }
 
     private fun navigateToMainMenu() {
         val intent = Intent(this, MainActivity::class.java)

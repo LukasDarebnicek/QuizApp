@@ -6,15 +6,33 @@
     android:padding="16dp"
     android:background="@drawable/background_gradient">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Hlavní řádek pro nadpis a tlačítko Show Stats vedle sebe -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Choose Your Quiz Settings"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/white"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="24dp"/>
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose Your Quiz Settings"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginEnd="30dp"/>
+
+        <Button
+            android:id="@+id/btn_show_questions"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="top|end"
+            android:backgroundTint="@color/orange_dark"
+            android:text="+"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
 
     <Spinner
         android:id="@+id/categorySpinner"
@@ -56,4 +74,5 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:layout_gravity="center_horizontal"/>
+
 </LinearLayout>
