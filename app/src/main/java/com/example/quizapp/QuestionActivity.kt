@@ -17,8 +17,8 @@ class QuestionActivity : AppCompatActivity() {
     private lateinit var questionTextView: TextView
     private lateinit var trueFalseContainer: LinearLayout
     private lateinit var multipleChoiceContainer: LinearLayout
-    private lateinit var trueButton: Button
-    private lateinit var falseButton: Button
+    private lateinit var radioTrue: RadioButton
+    private lateinit var radioFalse: RadioButton
     private lateinit var option1: RadioButton
     private lateinit var option2: RadioButton
     private lateinit var option3: RadioButton
@@ -46,8 +46,8 @@ class QuestionActivity : AppCompatActivity() {
         questionTextView = findViewById(R.id.questionTextView)
         trueFalseContainer = findViewById(R.id.trueFalseContainer)
         multipleChoiceContainer = findViewById(R.id.multipleChoiceContainer)
-        trueButton = findViewById(R.id.trueButton)
-        falseButton = findViewById(R.id.falseButton)
+        radioTrue = findViewById(R.id.radioTrue)
+        radioFalse = findViewById(R.id.radioFalse)
         option1 = findViewById(R.id.option1)
         option2 = findViewById(R.id.option2)
         option3 = findViewById(R.id.option3)
@@ -94,6 +94,9 @@ class QuestionActivity : AppCompatActivity() {
         if (selectedType == "boolean") {
             trueFalseContainer.visibility = View.VISIBLE
             multipleChoiceContainer.visibility = View.GONE
+
+            radioTrue.isChecked = false
+            radioFalse.isChecked = false
         } else {
             trueFalseContainer.visibility = View.GONE
             multipleChoiceContainer.visibility = View.VISIBLE
@@ -109,16 +112,26 @@ class QuestionActivity : AppCompatActivity() {
             option3.isChecked = false
             option4.isChecked = false
         }
+
     }
 
     private fun handleActionButton() {
         if (actionButton.text == "Check Answer") {
             val selectedOption = when {
-                option1.isChecked -> option1.text.toString()
-                option2.isChecked -> option2.text.toString()
-                option3.isChecked -> option3.text.toString()
-                option4.isChecked -> option4.text.toString()
-                else -> null
+                selectedType == "boolean" -> {
+                    when {
+                        radioTrue.isChecked -> "True"
+                        radioFalse.isChecked -> "False"
+                        else -> null
+                    }
+                }
+                else -> when {
+                    option1.isChecked -> option1.text.toString()
+                    option2.isChecked -> option2.text.toString()
+                    option3.isChecked -> option3.text.toString()
+                    option4.isChecked -> option4.text.toString()
+                    else -> null
+                }
             }
             checkAnswer(selectedOption)
             highlightAnswers(selectedOption ?: "")
@@ -136,6 +149,7 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun checkAnswer(selectedOption: String?) {
         val correctAnswer = questions[currentQuestionIndex].correctAnswer
@@ -163,29 +177,47 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun highlightCorrectAnswer(correctAnswer: String) {
-        when (correctAnswer) {
-            option1.text -> option1.setTextColor(Color.GREEN)
-            option2.text -> option2.setTextColor(Color.GREEN)
-            option3.text -> option3.setTextColor(Color.GREEN)
-            option4.text -> option4.setTextColor(Color.GREEN)
+        if (selectedType == "boolean") {
+            when (correctAnswer) {
+                "True" -> radioTrue.setTextColor(Color.GREEN)
+                "False" -> radioFalse.setTextColor(Color.GREEN)
+            }
+        } else {
+            when (correctAnswer) {
+                option1.text -> option1.setTextColor(Color.GREEN)
+                option2.text -> option2.setTextColor(Color.GREEN)
+                option3.text -> option3.setTextColor(Color.GREEN)
+                option4.text -> option4.setTextColor(Color.GREEN)
+            }
         }
     }
 
     private fun highlightIncorrectAnswer(selectedOption: String) {
-        when (selectedOption) {
-            option1.text -> option1.setTextColor(Color.RED)
-            option2.text -> option2.setTextColor(Color.RED)
-            option3.text -> option3.setTextColor(Color.RED)
-            option4.text -> option4.setTextColor(Color.RED)
+        if (selectedType == "boolean") {
+            when (selectedOption) {
+                "True" -> radioTrue.setTextColor(Color.RED)
+                "False" -> radioFalse.setTextColor(Color.RED)
+            }
+        } else {
+            when (selectedOption) {
+                option1.text -> option1.setTextColor(Color.RED)
+                option2.text -> option2.setTextColor(Color.RED)
+                option3.text -> option3.setTextColor(Color.RED)
+                option4.text -> option4.setTextColor(Color.RED)
+            }
         }
     }
 
+
     private fun resetAnswerColors() {
+        radioTrue.setTextColor(Color.BLACK)
+        radioFalse.setTextColor(Color.BLACK)
         option1.setTextColor(Color.BLACK)
         option2.setTextColor(Color.BLACK)
         option3.setTextColor(Color.BLACK)
         option4.setTextColor(Color.BLACK)
     }
+
 
     private fun showFinalScoreDialog() {
         // Zobrazit skóre a tlačítka

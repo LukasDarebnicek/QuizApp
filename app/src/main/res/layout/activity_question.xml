@@ -46,29 +46,25 @@
             android:id="@+id/trueFalseContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:visibility="gone"
             android:gravity="center_horizontal">
 
-            <Button
-                android:id="@+id/trueButton"
+            <RadioButton
+                android:id="@+id/radioTrue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="True"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/orange_dark"
                 android:padding="8dp" />
 
-            <Button
-                android:id="@+id/falseButton"
+            <RadioButton
+                android:id="@+id/radioFalse"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="False"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/orange_dark"
-                android:layout_marginStart="16dp"
                 android:padding="8dp" />
         </LinearLayout>
+
 
         <!-- Layout pro Multiple Choice odpovědi -->
         <LinearLayout

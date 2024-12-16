@@ -17,7 +17,7 @@
         <activity
             android:name=".SplashActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:label="Splash Screen"
+            android:label="Quizz App"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
